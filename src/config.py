@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 REFRESH_SLEEP_TIME: Final = int(os.getenv("REFRESH_SLEEP_TIME"))
 TIMEOUT: Final = int(os.getenv("TIMEOUT")) * 1000
+HEADLESS: Final = os.getenv("HEADLESS","true") == "true"
 
 # Pushover Credentials
 PUSHOVER_TOKEN: Final = os.getenv("PUSHOVER_TOKEN")
