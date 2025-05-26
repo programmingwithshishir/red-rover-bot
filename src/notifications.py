@@ -2,22 +2,18 @@ import requests
 from config import logger, PUSHOVER_TOKEN, PUSHOVER_USER_KEY
 
 class Notification:
-    def __init__(self, job):
-        self.job = job
-
-    def format_message(self, job):
+    @staticmethod
+    def format_message(job):
         notification = title = ""
         for key, value in job.items():
-            if key == "notes":
-                notification += f"{key}: {value}\n"
-            elif key == "scheduled_dt":
-                title = value
-            else:
-                notification += f"{value}\n"
+            if key == "notes": notification += f"{key}: {value}\n"
+            elif key == "scheduled_dt": title = value
+            else: notification += f"{value}\n"
         return title, notification
 
-    def send_mobile_notification(self, title, message):
-        title, message = self.format_message(self.job)
+    @staticmethod
+    def send_mobile_notification(job):
+        title, message = Notification.format_message(job)
         url = "https://api.pushover.net/1/messages.json"
         params = {
             "token": PUSHOVER_TOKEN,
