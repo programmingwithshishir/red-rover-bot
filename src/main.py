@@ -7,6 +7,7 @@ from database import Database
 from notifications import Notification
 from config import (
     logger,
+    TESTING,
     FILTER_BUTTON_XPATH,
     REFRESH_BUTTON_XPATH,
     LOADER_XPATH,
@@ -69,8 +70,7 @@ def filter(page):
     # Finding filter options
     filter_options = filter_button.get_by_role("listbox").get_by_role("option").all()
     for option in filter_options:
-        # TODO: Change this to "Default" or "All (ignore preferences)" depending on testing or not
-        if option.inner_text() == "All (ignore preferences)":
+        if option.inner_text() == "All (ignore preferences)" if TESTING else "Default":
             option.click()
             break
     page.locator(LOADER_XPATH).wait_for(state="hidden", timeout=TIMEOUT)
