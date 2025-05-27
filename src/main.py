@@ -121,15 +121,17 @@ def look_for_jobs(page, db):
             if db.uid_exists(): 
                 logger.info("Job already exists in the database.")
                 continue
-            db.insert_job(data)
-            logger.info("Successfully inserted the jobs into the database.")
 
             # Sending the notification
             try:
                 Notification.send_mobile_notification(data)
                 logger.info(f"Notification sent for uid: {data['uid']}")
             except: logger.critical("Notification Error: Notification wasn't sent!")
-            
+            try:
+                db.insert_job(data)
+                logger.info("Successfully inserted the jobs into the database.")
+            except: logger.critical(f"Data {data["uid"]} wasn't added to the database")
+                
 def main():
     try:
         logger.info("Loading the database.")
