@@ -12,15 +12,14 @@ class Notification:
         return title, notification
 
     @staticmethod
-    def send_mobile_notification(job):
-        title, message = Notification.format_message(job)
+    def send_message(title, message, priority):
         url = "https://api.pushover.net/1/messages.json"
         params = {
             "token": PUSHOVER_TOKEN,
             "user": PUSHOVER_USER_KEY,
             "title": title,
             "message": message,
-            "priority": "1",
+            "priority": str(priority),
         }
         while True:
             response = requests.post(
@@ -31,3 +30,8 @@ class Notification:
                 logger.info("Notification sent successfully")
                 break
             else: logger.warning(f"Notification failed with status code {response.status_code}. Retrying!")
+
+    @staticmethod
+    def send_mobile_notification(job):
+        title, message = Notification.format_message(job)
+        Notification.send_message(title, message, 1)
