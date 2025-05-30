@@ -12,7 +12,7 @@ class Notification:
         return title, notification
 
     @staticmethod
-    def send_message(title, message, priority):
+    def send_log_notification(title, message, priority):
         url = "https://api.pushover.net/1/messages.json"
         params = {
             "token": PUSHOVER_TOKEN,
@@ -26,12 +26,10 @@ class Notification:
                 url,
                 params=params,
             )
-            if response.status_code == 200:
-                logger.info("Notification sent successfully")
-                break
+            if response.status_code == 200: break
             else: logger.warning(f"Notification failed with status code {response.status_code}. Retrying!")
 
     @staticmethod
     def send_mobile_notification(job):
         title, message = Notification.format_message(job)
-        Notification.send_message(title, message, 1)
+        Notification.send_log_notification(title, message, 1)
