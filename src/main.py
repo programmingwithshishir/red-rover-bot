@@ -56,8 +56,6 @@ def login(page):
         except TimeoutError: logger.error("Login unsuccessful: Browser Timeout - Check your connection!")
         except Exception as e: 
             logger.critical(f"Login unsuccessful: Exception Type - {type(e).__name__}!")
-            # Notification.send_log_notification("Bot crashed",f"Exception - {type(e).__name__}!",-1)
-            Notification.send_log_notification(traceback.print_exc())
             exit(0)
         except KeyboardInterrupt:
             logger.critical("KeyboardInterrupt: Exiting!")
@@ -95,49 +93,60 @@ def extract_job_details(job):
     return formatted_job
 
 def look_for_jobs(page, db):
-    # Finding the refresh button element
-    time.sleep(REFRESH_SLEEP_TIME)
-    refresh_button_el = page.locator(REFRESH_BUTTON_XPATH)
-    refresh_button_el.wait_for(state="attached", timeout=TIMEOUT)
-    refresh_button_el.click()
-    # Wait for the page to load
-    page.locator(LOADER_XPATH).wait_for(state="hidden", timeout=TIMEOUT)
-    logger.info(f"Successfully refreshed jobs")
+    last_fetch = [];
+    current_fetch = [];
+    while True:
+        # Finding the refresh button element
+        time.sleep(REFRESH_SLEEP_TIME)
+        refresh_button_el = page.locator(REFRESH_BUTTON_XPATH)
+        refresh_button_el.wait_for(state="attached", timeout=TIMEOUT)
+        refresh_button_el.click()
+        # Wait for the page to load
+        page.locator(LOADER_XPATH).wait_for(state="hidden", timeout=TIMEOUT)
+        logger.info(f"Successfully refreshed jobs")
 
-    # Find all sub job divs in main div
-    sub_jobs_parent = page.locator(ALL_JOBS_XPATH)
-    sub_jobs_parent.wait_for(state="attached", timeout=TIMEOUT)
-    sub_jobs_children = sub_jobs_parent.locator(":scope > div").all()
+        # Find all sub job divs in main div
+        sub_jobs_parent = page.locator(ALL_JOBS_XPATH)
+        sub_jobs_parent.wait_for(state="attached", timeout=TIMEOUT)
+        sub_jobs_children = sub_jobs_parent.locator(":scope > div").all()
 
-    # Check if it's a job div
-    for sub_job_child in sub_jobs_children:
-        sub_job = sub_job_child.locator('[class*="infoContainer"]')
-        if sub_job.count() > 0: 
-            logger.info("Found a job!")
-            db.delete_old_jobs()
-            data = extract_job_details(sub_job.inner_text())
-            # TODO: Get Notes if any here
+        # Check if it's a job div
+        for sub_job_child in sub_jobs_children:
+            sub_job = sub_job_child.locator('[class*="infoContainer"]')
+            if sub_job.count() > 0: 
+                logger.info("Found a job!")
+                db.delete_old_jobs()
+                data = extract_job_details(sub_job.inner_text())
+                # TODO: Get Note if any here
 
-            # Adding a unique identifier for the job and inserting to database
-            data["uid"] = generate_unique_identifier(data)
-            data["timestamp"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            if db.uid_exists(data["uid"]): 
-                logger.info("Job already exists in the database.")
-                continue
+                # Adding a unique identifier for the job and inserting to database
+                data["uid"] = generate_unique_identifier(data)
+                data["timestamp"] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                current_fetch.append(data)
+                
+                # Handling reappearing jobs
+                if db.uid_exists(data["uid"]): 
+                    logger.info("Job already exists in the database.")
+                    if(any(d.get("uid") == data["uid"] for d in last_fetch)): continue
+                    logger.info("Found a reappearing job!")
+                    try:
+                        Notification.send_mobile_notification({k: v for k, v in data.items() if k not in ("uid", "timestamp")}, True)
+                        logger.info(f"Notification sent for uid: {data['uid']}")
+                    except: logger.critical("Notification Error: Notification wasn't sent!")
+                    continue 
 
-            # Sending the notification
-            try:
-                Notification.send_mobile_notification({k: v for k, v in data.items() if k not in ("uid", "timestamp")})
-                logger.info(f"Notification sent for uid: {data['uid']}")
-            except: 
-                logger.critical("Notification Error: Notification wasn't sent!")
-                traceback.print_exc()
-            try:
-                db.insert_job(data)
-                logger.info("Successfully inserted the jobs into the database.")
-            except: 
-                logger.critical(f"Data {data['uid']} wasn't added to the database")
-                Notification.send_log_notification(traceback.print_exc())
+                # Sending the notification
+                try:
+                    Notification.send_mobile_notification({k: v for k, v in data.items() if k not in ("uid", "timestamp")}, False)
+                    logger.info(f"Notification sent for uid: {data['uid']}")
+                except: logger.critical("Notification Error: Notification wasn't sent!")
+                try:
+                    db.insert_job(data)
+                    logger.info("Successfully inserted the jobs into the database.")
+                except: logger.critical(f"Data {data['uid']} wasn't added to the database")
+        last_fetch.clear()
+        last_fetch.extend(current_fetch)
+        current_fetch.clear()
                 
 def main():
     try:
@@ -153,14 +162,13 @@ def main():
             logger.info("Login successful.")
             filter(page)
             logger.info("Desired jobs filtered.")
-            while True: look_for_jobs(page, db)
+            look_for_jobs(page, db)
     except Exception as e: 
         logger.critical(f"Running unsuccessful: Exception Type - {type(e).__name__}!")
-        # Notification.send_log_notification("Bot crashed",f"Exception - {type(e).__name__}!",-1)
-        Notification.send_log_notification(traceback.print_exc())
         exit(0)
     except KeyboardInterrupt: 
         logger.critical("KeyboardInterrupt: Exiting!")
+    finally: db.close_connection()
 
 if __name__ == "__main__":
     main()

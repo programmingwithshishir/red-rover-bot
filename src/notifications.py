@@ -6,7 +6,7 @@ class Notification:
     def format_message(job):
         notification = title = ""
         for key, value in job.items():
-            if key == "notes": notification += f"{key}: {value}\n"
+            if key == "note": notification += f"Note: {value}\n"
             elif key == "scheduled_dt": title = value
             else: notification += f"{value}\n"
         return title, notification
@@ -30,6 +30,7 @@ class Notification:
             else: logger.warning(f"Notification failed with status code {response.status_code}. Retrying!")
 
     @staticmethod
-    def send_mobile_notification(job):
+    def send_mobile_notification(job, reappeared):
         title, message = Notification.format_message(job)
+        if(reappeared): message += "\nThis job was either dropped by someone or resent by the teacher\n"
         Notification.send_log_notification(title, message, 1)

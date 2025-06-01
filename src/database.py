@@ -15,27 +15,6 @@ class Database:
         timestamp DATETIME)""")
         self.conn.commit()
 
-    # TODO: Fix this
-    def load_latest_jobs(self):
-        self.cursor.execute("""
-        SELECT
-            uid,
-            scheduled_dt,
-            teacher,
-            position,
-            location,
-            timestamp
-        FROM
-            (
-                SELECT
-                    *,
-                    ROW_NUMBER() OVER(ORDER BY timestamp DESC) AS row_num
-                FROM jobs
-            )
-        WHERE row_num = 1
-        """)
-        return self.cursor.fetchall()
-
     def insert_job(self, job):
         self.cursor.execute(
         """
