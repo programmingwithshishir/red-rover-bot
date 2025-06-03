@@ -1,5 +1,6 @@
-from playwright.sync_api import sync_playwright, TimeoutError
 import traceback
+import sys
+from playwright.sync_api import sync_playwright, TimeoutError
 import time
 import datetime
 import json
@@ -24,6 +25,12 @@ from config import (
     TIMEOUT,
     HEADLESS
 )
+
+def print_error_info(exc):
+    tb = traceback.extract_tb(sys.exc_info()[2])[-1]  # Get last call in traceback
+    filename, lineno, func, text = tb
+    print(f"Error: {type(exc).__name__}: {exc}")
+    print(f"Line {lineno} in {filename}: {text}")
 
 def login(page):
     while True:
@@ -117,7 +124,13 @@ def look_for_jobs(page, db):
                 logger.info("Found a job!")
                 db.delete_old_jobs()
                 data = extract_job_details(sub_job.inner_text())
-                # TODO: Get Note if any here
+                
+                # Getting Note if it exists
+                notes_button = sub_job_child.locator('[class*="notes"]')
+                if notes_button.count() > 0 and notes_button.is_visible():
+                    notes_button.click()
+                    note = page.locator('div[role="tooltip"]')
+                    data["note"] = note.inner_text()
 
                 # Adding a unique identifier for the job and inserting to database
                 data["uid"] = generate_unique_identifier(data)
@@ -165,6 +178,7 @@ def main():
             look_for_jobs(page, db)
     except Exception as e: 
         logger.critical(f"Running unsuccessful: Exception Type - {type(e).__name__}!")
+        print_error_info(e)
         exit(0)
     except KeyboardInterrupt: 
         logger.critical("KeyboardInterrupt: Exiting!")
