@@ -75,9 +75,9 @@ def filter(page):
     filter_button.click()
 
     # Finding filter options
-    filter_options = filter_button.get_by_role("listbox").get_by_role("option").all()
+    filter_options = page.get_by_role("option").all()
     for option in filter_options:
-        if option.inner_text() == "All (ignore preferences)" if TESTING else "Default":
+        if option.inner_text() == ("All (ignore preferences)" if TESTING else "Default"):
             option.click()
             break
     page.locator(LOADER_XPATH).wait_for(state="hidden", timeout=TIMEOUT)
@@ -105,9 +105,9 @@ def look_for_jobs(page, db):
     while True:
         # Finding the refresh button element
         time.sleep(REFRESH_SLEEP_TIME)
-        refresh_button_el = page.locator(REFRESH_BUTTON_XPATH)
-        refresh_button_el.wait_for(state="attached", timeout=TIMEOUT)
-        refresh_button_el.click()
+        refresh_button = page.locator(REFRESH_BUTTON_XPATH)
+        refresh_button.wait_for(state="attached", timeout=TIMEOUT)
+        refresh_button.click()
         # Wait for the page to load
         page.locator(LOADER_XPATH).wait_for(state="hidden", timeout=TIMEOUT)
         logger.info(f"Successfully refreshed jobs")

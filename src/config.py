@@ -29,8 +29,8 @@ PASSWORD_XPATH: Final = 'xpath=//*[@id="password"]'
 LOGIN_XPATH: Final = "xpath=/html/body/main/main/div/div/div/main/form/div/button"
 
 # Job XPaths
-FILTER_BUTTON_XPATH: Final = 'xpath=//*[@id="content-view"]/div/div[2]/div[2]/div[2]/div/div/div'
+FILTER_BUTTON_XPATH: Final = 'xpath=//*[@id="content-view"]/div/div/div[3]/div/div[2]/div/div[2]/div/div'
 LOADER_XPATH: Final = 'xpath=//*[@id="edlumin-app"]/div/div/div/div/header/span'
-REFRESH_BUTTON_XPATH: Final = 'xpath=//*[@id="content-view"]/div/div[2]/div[1]/div/button'
+REFRESH_BUTTON_XPATH: Final = 'xpath=//*[@id="content-view"]/div/div/div[3]/div/div[1]/button'
 ALL_JOBS_XPATH: Final = 'xpath=//*[@id="content-view"]/div/div[2]/div[3]'
 NOTE_XPATH: Final = "xpath=/html/body/div[5]"
